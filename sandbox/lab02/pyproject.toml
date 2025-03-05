@@ -1,0 +1,33 @@
+[project]
+name = "allocation"
+version = "0.1.0"
+description = "Domain modeling from Architecture Patterns with Python"
+requires-python = "^3.11.10"
+dependencies = [
+    "pydantic (>=2.10.6,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [
+    { include = "allocation", from = "src" }
+]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+pytest-cov = "^6.0.0"
+mypy = "^1.15.0"
+pylint = "^3.3.4"
+black = "^25.1.0"
+isort = "^6.0.1"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.poe.tasks]
+test = "pytest"
+test-verbose = "pytest -v"
