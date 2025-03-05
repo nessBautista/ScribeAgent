@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "Domain modeling from Architecture Patterns with Python"
 requires-python = "^3.11.10"
 dependencies = [
-    "pydantic (>=2.10.6,<3.0.0)"
+    "pydantic (>=2.10.6,<3.0.0)",
+    "pytest (>=8.3.5,<9.0.0)",
+    "sqlalchemy (>=2.0.38,<3.0.0)",
+    "flask (>=3.1.0,<4.0.0)",
+    "psycopg2-binary (>=2.9.10,<3.0.0)",
+    "requests (>=2.32.3,<3.0.0)"
 ]
 
 
