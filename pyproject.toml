@@ -16,7 +16,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "scribeagent"
 version = "0.1.0"
-# ... other metadata ...
+
 
 packages = [
     { include = "scribeagent", from = "src" }  # If your code is in src/scribeagent/
@@ -26,4 +26,7 @@ packages = [
 pytest = "^8.3.5"
 black = "^25.1.0"
 mypy = "^1.15.0"
+poethepoet = "^0.33.1"
 
+[tool.poe.tasks.test]
+shell = "pytest"
