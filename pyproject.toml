@@ -5,6 +5,7 @@ description = "building a multi agent system for productivity tasks related to w
 readme = "README.md"
 requires-python = "^3.9"
 dependencies = [
+    "requests (>=2.32.3,<3.0.0)"
 ]
 
 
@@ -20,3 +21,9 @@ version = "0.1.0"
 packages = [
     { include = "scribeagent", from = "src" }  # If your code is in src/scribeagent/
 ]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+black = "^25.1.0"
+mypy = "^1.15.0"
+
