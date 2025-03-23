@@ -18,7 +18,12 @@ class Block(NotionObject):
     @classmethod
     def from_api(cls, data: Dict[str, Any]) -> "Block":
         """Create a block from API response data."""
-        block_type = BlockType(data.get("type"))
+        try:
+            block_type = BlockType(data.get("type"))
+        except ValueError:
+            # Handle unknown block types
+            print(f"Warning: Unknown block type '{data.get('type')}', treating as unsupported")
+            block_type = BlockType.UNSUPPORTED
         
         if block_type == BlockType.PARAGRAPH:
             return ParagraphBlock.from_api(data)
