@@ -1,11 +1,11 @@
 import os
 from dotenv import load_dotenv
 
-from scribeagent.infrastructure.notion.api_client import NotionAPIClient
-from scribeagent.infrastructure.notion.repositories import NotionAPIPageRepository
-from scribeagent.application.services.notion_services import NotionPageService
-from scribeagent.utils.NotionAPIUrlParser import NotionAPIUrlParser
+# Only import the domain entities needed for the example
 from scribeagent.domain.notion.entities import TextBlock
+
+# Add the factory to create and wire dependencies
+from scribeagent.infrastructure.factory import create_notion_page_service
 
 
 def example_usage():
@@ -13,14 +13,11 @@ def example_usage():
     # Load environment variables
     load_dotenv()
     
-    # # Set up dependencies
-    api_key = os.getenv("NOTION_API_KEY")    
-    api_client = NotionAPIClient(api_key)
-    page_repository = NotionAPIPageRepository(api_client)
-    url_parser = NotionAPIUrlParser()
+    # Get API key from environment
+    api_key = os.getenv("NOTION_API_KEY")
     
-    # Create service
-    page_service = NotionPageService(page_repository, url_parser)
+    # Use a factory to create the service with all its dependencies
+    page_service = create_notion_page_service(api_key)
     
     # Get page by URL
     page_url = "https://www.notion.so/Installing-Objectbox-with-an-xcode-project-19e10ad7d21e80eab058fa47a33eb1df?pvs=4"
