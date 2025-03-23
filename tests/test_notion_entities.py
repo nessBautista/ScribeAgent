@@ -2,6 +2,15 @@ from datetime import datetime
 from scribeagent.domain.notion.value_objects import NotionObject, RichTextContent, Parent
 from scribeagent.domain.notion.enums import NotionObjectType
 from scribeagent.domain.notion.value_objects import TitlePropertyValue, RichTextPropertyValue, CheckboxPropertyValue, PropertyType, PropertyValue
+from scribeagent.domain.notion.entities import (
+    Block,
+    TextBlock,
+    ParagraphBlock,
+    HeadingBlock,
+    BulletedListItemBlock,
+    NumberedListItemBlock,
+    ToDoBlock
+)
 import pytest
 
 
@@ -211,4 +220,165 @@ def test_property_value_factory():
         "type": "unsupported_type"
     }
     with pytest.raises(NotImplementedError):
-        PropertyValue.from_api("prop4", unsupported_data) 
+        PropertyValue.from_api("prop4", unsupported_data)
+
+
+def test_block_factory():
+    # Test data for different block types
+    paragraph_data = {
+        "object": "block",
+        "id": "block_id",
+        "type": "paragraph",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": False,
+        "archived": False,
+        "paragraph": {
+            "rich_text": [{
+                "type": "text",
+                "text": {"content": "Test paragraph"},
+                "plain_text": "Test paragraph"
+            }],
+            "color": "blue"
+        }
+    }
+    
+    heading_data = {
+        "object": "block",
+        "id": "block_id",
+        "type": "heading_1",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": False,
+        "archived": False,
+        "heading_1": {
+            "rich_text": [{
+                "type": "text",
+                "text": {"content": "Test heading"},
+                "plain_text": "Test heading"
+            }],
+            "color": "default",
+            "is_toggleable": True
+        }
+    }
+    
+    todo_data = {
+        "object": "block",
+        "id": "block_id",
+        "type": "to_do",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": False,
+        "archived": False,
+        "to_do": {
+            "rich_text": [{
+                "type": "text",
+                "text": {"content": "Test todo"},
+                "plain_text": "Test todo"
+            }],
+            "checked": True,
+            "color": "default"
+        }
+    }
+    
+    # Test block creation through factory method
+    paragraph_block = Block.from_api(paragraph_data)
+    heading_block = Block.from_api(heading_data)
+    todo_block = Block.from_api(todo_data)
+    
+    # Test correct instance types
+    assert isinstance(paragraph_block, ParagraphBlock)
+    assert isinstance(heading_block, HeadingBlock)
+    assert isinstance(todo_block, ToDoBlock)
+    
+    # Test common block properties
+    assert paragraph_block.id == "block_id"
+    assert paragraph_block.object_type == NotionObjectType.BLOCK
+    assert not paragraph_block.has_children
+    assert not paragraph_block.archived
+    
+    # Test specific block properties
+    assert paragraph_block.color == "blue"
+    assert paragraph_block.get_plain_text() == "Test paragraph"
+    
+    assert heading_block.level == 1
+    assert heading_block.is_toggleable
+    assert heading_block.get_plain_text() == "Test heading"
+    
+    assert todo_block.checked
+    assert todo_block.get_plain_text() == "Test todo"
+
+
+def test_text_block_plain_text():
+    # Test getting plain text from blocks with multiple rich text segments
+    data = {
+        "object": "block",
+        "id": "block_id",
+        "type": "paragraph",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": False,
+        "archived": False,
+        "paragraph": {
+            "rich_text": [
+                {
+                    "type": "text",
+                    "text": {"content": "First "},
+                    "plain_text": "First "
+                },
+                {
+                    "type": "text",
+                    "text": {"content": "second"},
+                    "plain_text": "second"
+                }
+            ],
+            "color": "default"
+        }
+    }
+    
+    block = ParagraphBlock.from_api(data)
+    assert block.get_plain_text() == "First second"
+
+
+def test_block_datetime_conversion():
+    # Test proper conversion of ISO datetime strings
+    data = {
+        "object": "block",
+        "id": "block_id",
+        "type": "paragraph",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": False,
+        "archived": False,
+        "paragraph": {
+            "rich_text": [],
+            "color": "default"
+        }
+    }
+    
+    block = ParagraphBlock.from_api(data)
+    
+    assert block.created_time.year == 2024
+    assert block.created_time.month == 3
+    assert block.created_time.day == 23
+    assert block.created_time.hour == 12
+    assert block.created_time.minute == 0
+    
+    assert block.last_edited_time.hour == 12
+    assert block.last_edited_time.minute == 30
+
+
+def test_unsupported_block_type():
+    # Test handling of unsupported block types
+    data = {
+        "object": "block",
+        "id": "block_id",
+        "type": "unsupported_type",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": False,
+        "archived": False
+    }
+    
+    with pytest.raises(ValueError):
+        Block.from_api(data) 
