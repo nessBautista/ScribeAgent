@@ -1,7 +1,7 @@
 from datetime import datetime
 from scribeagent.domain.notion.value_objects import NotionObject, RichTextContent, Parent
 from scribeagent.domain.notion.enums import NotionObjectType, BlockType
-from scribeagent.domain.notion.value_objects import TitlePropertyValue, RichTextPropertyValue, CheckboxPropertyValue, PropertyType, PropertyValue
+from scribeagent.domain.notion.value_objects import TitlePropertyValue, RichTextPropertyValue, CheckboxPropertyValue, PropertyType, PropertyValue, GenericPropertyValue
 from scribeagent.domain.notion.entities import (
     Block,
     TextBlock,
@@ -221,8 +221,9 @@ def test_property_value_factory():
     unsupported_data = {
         "type": "unsupported_type"
     }
-    with pytest.raises(NotImplementedError):
-        PropertyValue.from_api("prop4", unsupported_data)
+    unsupported_prop = PropertyValue.from_api("prop4", unsupported_data)
+    assert isinstance(unsupported_prop, GenericPropertyValue)
+    assert unsupported_prop.get_plain_text() == "<Unsupported property type: unsupported_type>"
 
 
 def test_block_factory():

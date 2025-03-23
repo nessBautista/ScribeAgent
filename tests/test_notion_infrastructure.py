@@ -142,7 +142,7 @@ class TestNotionAPIPageRepository:
     def setup_method(self):
         """Set up test fixtures."""
         self.api_client = Mock()
-        self.repository = NotionAPIPageRepository(self.api_client)
+        self.repository = NotionAPIPageRepository(self.api_client, max_depth=3)
     
     def test_get_page(self):
         """Test the get_page method."""
