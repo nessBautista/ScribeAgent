@@ -68,3 +68,82 @@ class Parent:
             parent_id = data.get("block_id")
             
         return cls(type=parent_type, id=parent_id)
+
+
+@dataclass
+class PropertyValue(ABC):
+    """Base class for property values."""
+    id: str
+    type: PropertyType
+    
+    @classmethod
+    def from_api(cls, id: str, data: Dict[str, Any]) -> "PropertyValue":
+        """Create a property value from API response data."""
+        try:
+            property_type = PropertyType(data.get("type"))
+        except ValueError:
+            raise NotImplementedError(f"Property type {data.get('type')} not implemented")
+        
+        if property_type == PropertyType.TITLE:
+            return TitlePropertyValue.from_api(id, data)
+        elif property_type == PropertyType.RICH_TEXT:
+            return RichTextPropertyValue.from_api(id, data)
+        elif property_type == PropertyType.CHECKBOX:
+            return CheckboxPropertyValue.from_api(id, data)
+        else:
+            raise NotImplementedError(f"Property type {property_type} not implemented")
+
+
+@dataclass
+class TitlePropertyValue(PropertyValue):
+    """Title property value."""
+    title: List[RichTextContent] = field(default_factory=list)
+    
+    @classmethod
+    def from_api(cls, id: str, data: Dict[str, Any]) -> "TitlePropertyValue":
+        """Create a title property value from API response data."""
+        title_data = data.get("title", [])
+        return cls(
+            id=id,
+            type=PropertyType.TITLE,
+            title=RichTextContent.from_api(title_data)
+        )
+    
+    def get_plain_text(self) -> str:
+        """Get the plain text of the title."""
+        return ''.join(text.plain_text for text in self.title)
+
+
+@dataclass
+class RichTextPropertyValue(PropertyValue):
+    """Rich text property value."""
+    rich_text: List[RichTextContent] = field(default_factory=list)
+    
+    @classmethod
+    def from_api(cls, id: str, data: Dict[str, Any]) -> "RichTextPropertyValue":
+        """Create a rich text property value from API response data."""
+        rich_text_data = data.get("rich_text", [])
+        return cls(
+            id=id,
+            type=PropertyType.RICH_TEXT,
+            rich_text=RichTextContent.from_api(rich_text_data)
+        )
+    
+    def get_plain_text(self) -> str:
+        """Get the plain text of the rich text."""
+        return ''.join(text.plain_text for text in self.rich_text)
+
+
+@dataclass
+class CheckboxPropertyValue(PropertyValue):
+    """Checkbox property value."""
+    checkbox: bool = False
+    
+    @classmethod
+    def from_api(cls, id: str, data: Dict[str, Any]) -> "CheckboxPropertyValue":
+        """Create a checkbox property value from API response data."""
+        return cls(
+            id=id,
+            type=PropertyType.CHECKBOX,
+            checkbox=data.get("checkbox", False)
+        )
