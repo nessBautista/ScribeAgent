@@ -9,6 +9,8 @@ dependencies = [
     "python-dotenv (>=1.0.1,<2.0.0)"
 ]
 
+[project.scripts]
+notion-page = "scribeagent.cli:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -35,3 +37,10 @@ shell = "pytest"
 [tool.poe.tasks.notion-example]
 cmd = "python -m src.examples.notion_client"
 help = "Run the Notion client example"
+
+[tool.poe.tasks.notion-page]
+cmd = "python -m scribeagent.cli"
+help = "Retrieve and display a Notion page by URL"
+
+[tool.poetry.scripts]
+notion-page = "scribeagent.cli:main"
