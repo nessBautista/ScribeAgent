@@ -1,6 +1,6 @@
 from datetime import datetime
 from scribeagent.domain.notion.value_objects import NotionObject, RichTextContent, Parent
-from scribeagent.domain.notion.enums import NotionObjectType
+from scribeagent.domain.notion.enums import NotionObjectType, BlockType
 from scribeagent.domain.notion.value_objects import TitlePropertyValue, RichTextPropertyValue, CheckboxPropertyValue, PropertyType, PropertyValue
 from scribeagent.domain.notion.entities import (
     Block,
@@ -382,8 +382,11 @@ def test_unsupported_block_type():
         "archived": False
     }
     
-    with pytest.raises(ValueError):
-        Block.from_api(data)
+    # Now we expect the method to return a Block with UNSUPPORTED type
+    block = Block.from_api(data)
+    assert block.block_type == BlockType.UNSUPPORTED
+    assert block.id == "block_id"
+    assert block.has_children is False
 
 
 def test_page_from_api():
