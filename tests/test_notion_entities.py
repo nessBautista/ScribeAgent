@@ -9,7 +9,9 @@ from scribeagent.domain.notion.entities import (
     HeadingBlock,
     BulletedListItemBlock,
     NumberedListItemBlock,
-    ToDoBlock
+    ToDoBlock,
+    Page,
+    Database
 )
 import pytest
 
@@ -381,4 +383,262 @@ def test_unsupported_block_type():
     }
     
     with pytest.raises(ValueError):
-        Block.from_api(data) 
+        Block.from_api(data)
+
+
+def test_page_from_api():
+    # Test data mimicking Notion API response for a page
+    api_data = {
+        "object": "page",
+        "id": "page_id",
+        "parent": {
+            "type": "database_id",
+            "database_id": "db_id"
+        },
+        "properties": {
+            "Name": {
+                "id": "title",
+                "type": "title",
+                "title": [{
+                    "type": "text",
+                    "text": {"content": "Test Page"},
+                    "plain_text": "Test Page"
+                }]
+            },
+            "Description": {
+                "id": "desc",
+                "type": "rich_text",
+                "rich_text": [{
+                    "type": "text",
+                    "text": {"content": "Test Description"},
+                    "plain_text": "Test Description"
+                }]
+            }
+        },
+        "url": "https://notion.so/test-page",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "archived": False
+    }
+    
+    page = Page.from_api(api_data)
+    
+    # Test basic properties
+    assert page.id == "page_id"
+    assert page.object_type == NotionObjectType.PAGE
+    assert page.url == "https://notion.so/test-page"
+    assert not page.archived
+    
+    # Test parent
+    assert page.parent.type == "database_id"
+    assert page.parent.id == "db_id"
+    
+    # Test properties
+    assert len(page.properties) == 2
+    assert isinstance(page.properties["Name"], TitlePropertyValue)
+    assert isinstance(page.properties["Description"], RichTextPropertyValue)
+    
+    # Test title getter
+    assert page.get_title() == "Test Page"
+
+
+def test_database_from_api():
+    # Test data mimicking Notion API response for a database
+    api_data = {
+        "object": "database",
+        "id": "db_id",
+        "parent": {
+            "type": "page_id",
+            "page_id": "parent_page_id"
+        },
+        "title": [{
+            "type": "text",
+            "text": {"content": "Test Database"},
+            "plain_text": "Test Database"
+        }],
+        "properties": {
+            "Name": {"type": "title", "title": {}},
+            "Description": {"type": "rich_text", "rich_text": {}}
+        },
+        "url": "https://notion.so/test-database",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "archived": False
+    }
+    
+    database = Database.from_api(api_data)
+    
+    # Test basic properties
+    assert database.id == "db_id"
+    assert database.object_type == NotionObjectType.DATABASE
+    assert database.url == "https://notion.so/test-database"
+    assert not database.archived
+    
+    # Test parent
+    assert database.parent.type == "page_id"
+    assert database.parent.id == "parent_page_id"
+    
+    # Test title
+    assert len(database.title) == 1
+    assert database.get_title() == "Test Database"
+    
+    # Test properties schema
+    assert len(database.properties) == 2
+    assert database.properties["Name"]["type"] == "title"
+    assert database.properties["Description"]["type"] == "rich_text"
+
+
+def test_page_without_title():
+    """Test page behavior when no title property exists."""
+    api_data = {
+        "object": "page",
+        "id": "page_id",
+        "parent": {
+            "type": "page_id",
+            "page_id": "parent_id"
+        },
+        "properties": {
+            "Description": {
+                "id": "desc",
+                "type": "rich_text",
+                "rich_text": [{
+                    "type": "text",
+                    "text": {"content": "Only description"},
+                    "plain_text": "Only description"
+                }]
+            }
+        },
+        "url": "https://notion.so/test-page",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "archived": False
+    }
+    
+    page = Page.from_api(api_data)
+    assert page.get_title() == ""  # Should return empty string when no title exists
+
+
+def test_page_with_empty_properties():
+    """Test page creation with no properties."""
+    api_data = {
+        "object": "page",
+        "id": "page_id",
+        "parent": {
+            "type": "workspace",
+        },
+        "properties": {},
+        "url": "https://notion.so/test-page",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "archived": False
+    }
+    
+    page = Page.from_api(api_data)
+    assert len(page.properties) == 0
+    assert page.get_title() == ""
+
+
+def test_page_datetime_conversion():
+    """Test datetime conversion in page objects."""
+    api_data = {
+        "object": "page",
+        "id": "page_id",
+        "parent": {"type": "workspace"},
+        "properties": {},
+        "url": "",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "archived": False
+    }
+    
+    page = Page.from_api(api_data)
+    
+    assert page.created_time.year == 2024
+    assert page.created_time.month == 3
+    assert page.created_time.day == 23
+    assert page.created_time.hour == 12
+    assert page.created_time.minute == 0
+    
+    assert page.last_edited_time.hour == 12
+    assert page.last_edited_time.minute == 30
+
+
+def test_database_with_empty_title():
+    """Test database with empty title."""
+    api_data = {
+        "object": "database",
+        "id": "db_id",
+        "parent": {
+            "type": "page_id",
+            "page_id": "parent_page_id"
+        },
+        "title": [],  # Empty title
+        "properties": {
+            "Name": {"type": "title", "title": {}}
+        },
+        "url": "https://notion.so/test-database",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "archived": False
+    }
+    
+    database = Database.from_api(api_data)
+    assert database.get_title() == ""  # Should return empty string for empty title
+
+
+def test_database_with_multiple_title_segments():
+    """Test database with multi-segment title."""
+    api_data = {
+        "object": "database",
+        "id": "db_id",
+        "parent": {
+            "type": "page_id",
+            "page_id": "parent_page_id"
+        },
+        "title": [
+            {
+                "type": "text",
+                "text": {"content": "First "},
+                "plain_text": "First "
+            },
+            {
+                "type": "text",
+                "text": {"content": "Second"},
+                "plain_text": "Second"
+            }
+        ],
+        "properties": {},
+        "url": "https://notion.so/test-database",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "archived": False
+    }
+    
+    database = Database.from_api(api_data)
+    assert database.get_title() == "First Second"
+
+
+def test_database_datetime_conversion():
+    """Test datetime conversion in database objects."""
+    api_data = {
+        "object": "database",
+        "id": "db_id",
+        "parent": {"type": "workspace"},
+        "title": [],
+        "properties": {},
+        "url": "",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "archived": False
+    }
+    
+    database = Database.from_api(api_data)
+    
+    assert database.created_time.year == 2024
+    assert database.created_time.month == 3
+    assert database.created_time.day == 23
+    assert database.created_time.hour == 12
+    assert database.created_time.minute == 0
+    
+    assert database.last_edited_time.hour == 12
+    assert database.last_edited_time.minute == 30 

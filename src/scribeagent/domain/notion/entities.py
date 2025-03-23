@@ -2,7 +2,7 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Dict, List, Any
 
-from .value_objects import NotionObject, RichTextContent
+from .value_objects import NotionObject, RichTextContent, Parent, PropertyValue, PropertyType
 from .enums import NotionObjectType, BlockType
 
 
@@ -177,3 +177,76 @@ class ToDoBlock(TextBlock):
             color=todo_data.get("color", "default"),
             checked=todo_data.get("checked", False)
         )
+
+
+# ----- Page Models ----- #
+
+@dataclass
+class Page(NotionObject):
+    """Represents a Notion page."""
+    parent: Parent
+    properties: Dict[str, PropertyValue]
+    url: str
+    created_time: datetime
+    last_edited_time: datetime
+    archived: bool = False
+    
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "Page":
+        """Create a page from API response data."""
+        properties = {}
+        raw_properties = data.get("properties", {})
+        
+        for key, value in raw_properties.items():
+            properties[key] = PropertyValue.from_api(value.get("id"), value)
+        
+        return cls(
+            id=data.get("id"),
+            object_type=NotionObjectType.PAGE,
+            parent=Parent.from_api(data.get("parent", {})),
+            properties=properties,
+            url=data.get("url", ""),
+            created_time=datetime.fromisoformat(data.get("created_time").replace("Z", "+00:00")),
+            last_edited_time=datetime.fromisoformat(data.get("last_edited_time").replace("Z", "+00:00")),
+            archived=data.get("archived", False)
+        )
+    
+    def get_title(self) -> str:
+        """Get the title of the page."""
+        for prop in self.properties.values():
+            if prop.type == PropertyType.TITLE:
+                return prop.get_plain_text()
+        return ""
+
+
+# ----- Database Models ----- #
+
+@dataclass
+class Database(NotionObject):
+    """Represents a Notion database."""
+    parent: Parent
+    title: List[RichTextContent]
+    properties: Dict[str, Any]  # Database schema
+    url: str
+    created_time: datetime
+    last_edited_time: datetime
+    archived: bool = False
+    
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "Database":
+        """Create a database from API response data."""
+        return cls(
+            id=data.get("id"),
+            object_type=NotionObjectType.DATABASE,
+            parent=Parent.from_api(data.get("parent", {})),
+            title=RichTextContent.from_api(data.get("title", [])),
+            properties=data.get("properties", {}),
+            url=data.get("url", ""),
+            created_time=datetime.fromisoformat(data.get("created_time").replace("Z", "+00:00")),
+            last_edited_time=datetime.fromisoformat(data.get("last_edited_time").replace("Z", "+00:00")),
+            archived=data.get("archived", False)
+        )
+    
+    def get_title(self) -> str:
+        """Get the title of the database."""
+        return ''.join(text.plain_text for text in self.title)
