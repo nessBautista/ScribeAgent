@@ -79,10 +79,15 @@ class PropertyValue(ABC):
     @classmethod
     def from_api(cls, id: str, data: Dict[str, Any]) -> "PropertyValue":
         """Create a property value from API response data."""
+        property_type_str = data.get("type")
+        
         try:
-            property_type = PropertyType(data.get("type"))
+            property_type = PropertyType(property_type_str)
         except ValueError:
-            raise NotImplementedError(f"Property type {data.get('type')} not implemented")
+            # Instead of immediately raising an error, return a more informative message
+            # and create a generic property value
+            print(f"Warning: Unsupported property type '{property_type_str}'. Full data: {data}")
+            return GenericPropertyValue.from_api(id, data)
         
         if property_type == PropertyType.TITLE:
             return TitlePropertyValue.from_api(id, data)
@@ -91,7 +96,8 @@ class PropertyValue(ABC):
         elif property_type == PropertyType.CHECKBOX:
             return CheckboxPropertyValue.from_api(id, data)
         else:
-            raise NotImplementedError(f"Property type {property_type} not implemented")
+            print(f"Warning: Property type {property_type} implementation not found. Full data: {data}")
+            return GenericPropertyValue.from_api(id, data)
 
 
 @dataclass
@@ -147,3 +153,24 @@ class CheckboxPropertyValue(PropertyValue):
             type=PropertyType.CHECKBOX,
             checkbox=data.get("checkbox", False)
         )
+
+
+@dataclass
+class GenericPropertyValue(PropertyValue):
+    """Generic property value for unsupported types."""
+    data: Dict[str, Any] = field(default_factory=dict)
+    
+    @classmethod
+    def from_api(cls, id: str, data: Dict[str, Any]) -> "GenericPropertyValue":
+        """Create a generic property value from API response data."""
+        property_type_str = data.get("type", "unknown")
+        return cls(
+            id=id,
+            type=PropertyType.TITLE,  # Using TITLE as a placeholder
+            data=data
+        )
+    
+    def get_plain_text(self) -> str:
+        """Return a string representation of the property value."""
+        property_type_str = self.data.get("type", "unknown")
+        return f"<Unsupported property type: {property_type_str}>"

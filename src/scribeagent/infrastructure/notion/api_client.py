@@ -1,14 +1,16 @@
 import requests
+import json
 from typing import Dict, Any, Optional
 
 
 class NotionAPIClient:
     """Client for the Notion API."""
     
-    def __init__(self, api_key: str, api_version: str = "2022-06-28"):
+    def __init__(self, api_key: str, api_version: str = "2022-06-28", debug: bool = True):
         self.api_key = api_key
         self.api_version = api_version
         self.base_url = "https://api.notion.com/v1"
+        self.debug = debug
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "Notion-Version": api_version,
@@ -29,7 +31,15 @@ class NotionAPIClient:
         )
         
         response.raise_for_status()
-        return response.json()
+        response_json = response.json()
+        
+        # Log the response if debug is enabled
+        if self.debug:
+            print(f"\n--- Notion API Response for {endpoint} ---")
+            print(json.dumps(response_json, indent=2))
+            print("-------------------------------------------\n")
+        
+        return response_json
     
     def get_page(self, page_id: str) -> Dict[str, Any]:
         """Get a page from the Notion API."""

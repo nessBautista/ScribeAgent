@@ -8,16 +8,22 @@ from .api_client import NotionAPIClient
 class NotionAPIPageRepository(PageRepository):
     """Implementation of page repository using Notion API."""
     
-    def __init__(self, api_client: NotionAPIClient):
+    def __init__(self, api_client: NotionAPIClient, max_depth: int):
         self.api_client = api_client
+        self.max_depth = max_depth
     
     def get_page(self, page_id: str) -> Page:
         """Get a page by ID."""
         data = self.api_client.get_page(page_id)
         return Page.from_api(data)
     
-    def get_page_content(self, page_id: str) -> List[Block]:
+    def get_page_content(self, page_id: str, current_depth=0) -> List[Block]:
         """Get the content of a page."""
+        # Check if we've reached the maximum recursion depth
+        if current_depth >= self.max_depth:
+            print(f"Warning: Maximum recursion depth ({self.max_depth}) reached for block {page_id}")
+            return []
+        
         blocks = []
         start_cursor = None
         
@@ -28,10 +34,10 @@ class NotionAPIPageRepository(PageRepository):
                 block = Block.from_api(block_data)
                 blocks.append(block)
                 
-                # Recursively get children if needed
-                if block.has_children:
-                    child_blocks = self.get_page_content(block.id)
-                    # In a real implementation, you'd associate these child blocks with their parent
+                # Only fetch child blocks if we haven't reached max depth
+                if block.has_children and current_depth < self.max_depth:
+                    child_blocks = self.get_page_content(block.id, current_depth + 1)
+                    block.children = child_blocks
             
             if response.get("has_more", False):
                 start_cursor = response.get("next_cursor")
