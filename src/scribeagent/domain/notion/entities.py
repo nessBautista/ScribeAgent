@@ -39,6 +39,8 @@ class Block(NotionObject):
             return NumberedListItemBlock.from_api(data)
         elif block_type == BlockType.TO_DO:
             return ToDoBlock.from_api(data)
+        elif block_type == BlockType.CODE:
+            return CodeBlock.from_api(data)  # Add this line
         else:
             return cls(
                 id=data.get("id"),
@@ -255,3 +257,31 @@ class Database(NotionObject):
     def get_title(self) -> str:
         """Get the title of the database."""
         return ''.join(text.plain_text for text in self.title)
+
+
+@dataclass
+class CodeBlock(TextBlock):
+    """Code block."""
+    language: str = "plain text"
+    caption: List[RichTextContent] = field(default_factory=list)
+    
+    @classmethod
+    def from_api(cls, data: Dict[str, Any]) -> "CodeBlock":
+        """Create a code block from API response data."""
+        code_data = data.get("code", {})
+        rich_text_data = code_data.get("rich_text", [])
+        caption_data = code_data.get("caption", [])
+        
+        return cls(
+            id=data.get("id"),
+            object_type=NotionObjectType.BLOCK,
+            created_time=datetime.fromisoformat(data.get("created_time").replace("Z", "+00:00")),
+            last_edited_time=datetime.fromisoformat(data.get("last_edited_time").replace("Z", "+00:00")),
+            has_children=data.get("has_children", False),
+            block_type=BlockType.CODE,
+            archived=data.get("archived", False),
+            rich_text=RichTextContent.from_api(rich_text_data),
+            color="default",
+            language=code_data.get("language", "plain text"),
+            caption=RichTextContent.from_api(caption_data)
+        )

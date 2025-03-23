@@ -11,7 +11,8 @@ from scribeagent.domain.notion.entities import (
     NumberedListItemBlock,
     ToDoBlock,
     Page,
-    Database
+    Database,
+    CodeBlock
 )
 import pytest
 
@@ -646,3 +647,44 @@ def test_database_datetime_conversion():
     
     assert database.last_edited_time.hour == 12
     assert database.last_edited_time.minute == 30 
+
+
+def test_code_block_from_api():
+    """Test creating a code block from API data."""
+    # Test data
+    code_data = {
+        "object": "block",
+        "id": "block_id",
+        "type": "code",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": False,
+        "archived": False,
+        "code": {
+            "rich_text": [{
+                "type": "text",
+                "text": {"content": "func test() {\n    print(\"Hello world\")\n}"},
+                "plain_text": "func test() {\n    print(\"Hello world\")\n}"
+            }],
+            "language": "swift",
+            "caption": [{
+                "type": "text",
+                "text": {"content": "Example Swift function"},
+                "plain_text": "Example Swift function"
+            }]
+        }
+    }
+    
+    # Create block through factory method
+    block = Block.from_api(code_data)
+    
+    # Test correct instance type
+    assert isinstance(block, CodeBlock)
+    
+    # Test properties
+    assert block.id == "block_id"
+    assert block.block_type == BlockType.CODE
+    assert block.language == "swift"
+    assert block.get_plain_text() == "func test() {\n    print(\"Hello world\")\n}"
+    assert len(block.caption) == 1
+    assert block.caption[0].plain_text == "Example Swift function"

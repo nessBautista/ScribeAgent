@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 # Only import the domain entities needed for the example
-from scribeagent.domain.notion.entities import TextBlock
+from scribeagent.domain.notion.entities import TextBlock, CodeBlock
 
 # Add the factory to create and wire dependencies
 from scribeagent.infrastructure.factory import create_notion_page_service
@@ -32,7 +32,17 @@ def example_usage():
     # Print page content
     print("\nPage Content:")
     for block in content:
-        if isinstance(block, TextBlock):
+        if isinstance(block, CodeBlock):
+            print(f"- {block.block_type.value} ({block.language}):")
+            print(f"```{block.language}")
+            print(block.get_plain_text())
+            print("```")
+            
+            if block.caption:
+                caption_text = ''.join(caption.plain_text for caption in block.caption)
+                if caption_text:
+                    print(f"Caption: {caption_text}")
+        elif isinstance(block, TextBlock):
             print(f"- {block.block_type.value}: {block.get_plain_text()}")
         else:
             print(f"- {block.block_type.value}")
