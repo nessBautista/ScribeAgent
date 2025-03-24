@@ -1,1 +1,1 @@
-from .model import Batch, OrderLine
+from .model import OrderLine
