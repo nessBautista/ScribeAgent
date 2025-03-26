@@ -14,6 +14,7 @@ class Block(NotionObject):
     has_children: bool
     block_type: BlockType
     archived: bool = False
+    children: List["Block"] = field(default_factory=list)
     
     @classmethod
     def from_api(cls, data: Dict[str, Any]) -> "Block":
@@ -40,7 +41,7 @@ class Block(NotionObject):
         elif block_type == BlockType.TO_DO:
             return ToDoBlock.from_api(data)
         elif block_type == BlockType.CODE:
-            return CodeBlock.from_api(data)  # Add this line
+            return CodeBlock.from_api(data)
         else:
             return cls(
                 id=data.get("id"),
@@ -49,7 +50,8 @@ class Block(NotionObject):
                 last_edited_time=datetime.fromisoformat(data.get("last_edited_time").replace("Z", "+00:00")),
                 has_children=data.get("has_children", False),
                 block_type=block_type,
-                archived=data.get("archived", False)
+                archived=data.get("archived", False),
+                children=[]
             )
 
 
@@ -83,7 +85,8 @@ class ParagraphBlock(TextBlock):
             block_type=BlockType.PARAGRAPH,
             archived=data.get("archived", False),
             rich_text=RichTextContent.from_api(rich_text_data),
-            color=paragraph_data.get("color", "default")
+            color=paragraph_data.get("color", "default"),
+            children=[]
         )
 
 
@@ -111,7 +114,8 @@ class HeadingBlock(TextBlock):
             rich_text=RichTextContent.from_api(rich_text_data),
             color=heading_data.get("color", "default"),
             level=level,
-            is_toggleable=heading_data.get("is_toggleable", False)
+            is_toggleable=heading_data.get("is_toggleable", False),
+            children=[]
         )
 
 
@@ -134,7 +138,8 @@ class BulletedListItemBlock(TextBlock):
             block_type=BlockType.BULLETED_LIST_ITEM,
             archived=data.get("archived", False),
             rich_text=RichTextContent.from_api(rich_text_data),
-            color=item_data.get("color", "default")
+            color=item_data.get("color", "default"),
+            children=[]
         )
 
 
@@ -157,7 +162,8 @@ class NumberedListItemBlock(TextBlock):
             block_type=BlockType.NUMBERED_LIST_ITEM,
             archived=data.get("archived", False),
             rich_text=RichTextContent.from_api(rich_text_data),
-            color=item_data.get("color", "default")
+            color=item_data.get("color", "default"),
+            children=[]
         )
 
 
@@ -182,7 +188,8 @@ class ToDoBlock(TextBlock):
             archived=data.get("archived", False),
             rich_text=RichTextContent.from_api(rich_text_data),
             color=todo_data.get("color", "default"),
-            checked=todo_data.get("checked", False)
+            checked=todo_data.get("checked", False),
+            children=[]
         )
 
 
@@ -283,5 +290,6 @@ class CodeBlock(TextBlock):
             rich_text=RichTextContent.from_api(rich_text_data),
             color="default",
             language=code_data.get("language", "plain text"),
-            caption=RichTextContent.from_api(caption_data)
+            caption=RichTextContent.from_api(caption_data),
+            children=[]
         )

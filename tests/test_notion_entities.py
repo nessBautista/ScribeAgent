@@ -688,3 +688,115 @@ def test_code_block_from_api():
     assert block.get_plain_text() == "func test() {\n    print(\"Hello world\")\n}"
     assert len(block.caption) == 1
     assert block.caption[0].plain_text == "Example Swift function"
+
+def test_block_with_children():
+    """Test block with children functionality."""
+    # Test data for a parent block with children
+    parent_block_data = {
+        "object": "block",
+        "id": "parent_block_id",
+        "type": "paragraph",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": True,
+        "archived": False,
+        "paragraph": {
+            "rich_text": [{
+                "type": "text",
+                "text": {"content": "Parent paragraph"},
+                "plain_text": "Parent paragraph"
+            }],
+            "color": "default"
+        }
+    }
+    
+    child_block_data = {
+        "object": "block",
+        "id": "child_block_id",
+        "type": "paragraph",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": False,
+        "archived": False,
+        "paragraph": {
+            "rich_text": [{
+                "type": "text",
+                "text": {"content": "Child paragraph"},
+                "plain_text": "Child paragraph"
+            }],
+            "color": "default"
+        }
+    }
+    
+    # Create parent block
+    parent_block = Block.from_api(parent_block_data)
+    assert parent_block.has_children is True
+    assert len(parent_block.children) == 0  # Initially empty
+    
+    # Create child block
+    child_block = Block.from_api(child_block_data)
+    
+    # Add child to parent
+    parent_block.children.append(child_block)
+    assert len(parent_block.children) == 1
+    assert parent_block.children[0].id == "child_block_id"
+    assert isinstance(parent_block.children[0], ParagraphBlock)
+
+def test_nested_code_block():
+    """Test code block with nested content."""
+    # Test data for a code block with caption
+    code_block_data = {
+        "object": "block",
+        "id": "code_block_id",
+        "type": "code",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": True,
+        "archived": False,
+        "code": {
+            "rich_text": [{
+                "type": "text",
+                "text": {"content": "def test():\n    pass"},
+                "plain_text": "def test():\n    pass"
+            }],
+            "language": "python",
+            "caption": [{
+                "type": "text",
+                "text": {"content": "Test function"},
+                "plain_text": "Test function"
+            }]
+        }
+    }
+    
+    # Create code block
+    code_block = Block.from_api(code_block_data)
+    assert isinstance(code_block, CodeBlock)
+    assert code_block.has_children is True
+    assert code_block.language == "python"
+    assert code_block.get_plain_text() == "def test():\n    pass"
+    assert code_block.caption[0].plain_text == "Test function"
+    
+    # Add a child block
+    child_block_data = {
+        "object": "block",
+        "id": "child_block_id",
+        "type": "paragraph",
+        "created_time": "2024-03-23T12:00:00.000Z",
+        "last_edited_time": "2024-03-23T12:30:00.000Z",
+        "has_children": False,
+        "archived": False,
+        "paragraph": {
+            "rich_text": [{
+                "type": "text",
+                "text": {"content": "Child note"},
+                "plain_text": "Child note"
+            }],
+            "color": "default"
+        }
+    }
+    
+    child_block = Block.from_api(child_block_data)
+    code_block.children.append(child_block)
+    assert len(code_block.children) == 1
+    assert isinstance(code_block.children[0], ParagraphBlock)
+    assert code_block.children[0].get_plain_text() == "Child note"

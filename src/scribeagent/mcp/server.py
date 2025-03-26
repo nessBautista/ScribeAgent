@@ -3,6 +3,8 @@ import os
 import logging
 from dotenv import load_dotenv
 from typing import List, Optional, Dict, Any
+from scribeagent.utils.notion_formatters import NotionBlockFormatter
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -37,28 +39,9 @@ def get_notion_page(page_url: str) -> Dict[str, Any]:
     logger.info(f"Fetching Notion page: {page_url}")
     try:
         page, content = notion_service.get_page_with_content(page_url)
-        
-        # Format the response
-        formatted_content = []
-        for block in content:
-            if isinstance(block, CodeBlock):
-                formatted_block = {
-                    "type": block.block_type.value,
-                    "language": block.language,
-                    "content": block.get_plain_text(),
-                }
-                if block.caption:
-                    formatted_block["caption"] = ''.join(caption.plain_text for caption in block.caption)
-                formatted_content.append(formatted_block)
-            elif isinstance(block, TextBlock):
-                formatted_content.append({
-                    "type": block.block_type.value,
-                    "content": block.get_plain_text()
-                })
-            else:
-                formatted_content.append({
-                    "type": block.block_type.value
-                })
+                
+        # Format all blocks
+        formatted_content = [NotionBlockFormatter.format_as_dict(block) for block in content]
         
         return {
             "title": page.get_title(),
@@ -79,18 +62,41 @@ def search_notion_blocks(page_url: str, query: str) -> List[Dict[str, Any]]:
         page, content = notion_service.get_page_with_content(page_url)
         matching_blocks = []
         
-        query = query.lower()
-        for block in content:
+        def search_block(block) -> None:
+            """Helper function to search through a block and its children."""
             if isinstance(block, (TextBlock, CodeBlock)):
                 block_text = block.get_plain_text().lower()
-                if query in block_text:
+                if query.lower() in block_text:
                     block_info = {
                         "type": block.block_type.value,
                         "content": block.get_plain_text()
                     }
                     if isinstance(block, CodeBlock):
                         block_info["language"] = block.language
+                    
+                    # Add children if they exist
+                    if block.has_children and block.children:
+                        block_info["children"] = []
+                        for child in block.children:
+                            if isinstance(child, (TextBlock, CodeBlock)):
+                                child_info = {
+                                    "type": child.block_type.value,
+                                    "content": child.get_plain_text()
+                                }
+                                if isinstance(child, CodeBlock):
+                                    child_info["language"] = child.language
+                                block_info["children"].append(child_info)
+                    
                     matching_blocks.append(block_info)
+            
+            # Recursively search through children
+            if block.has_children and block.children:
+                for child in block.children:
+                    search_block(child)
+        
+        # Search through all blocks
+        for block in content:
+            search_block(block)
         
         return matching_blocks
     except Exception as e:

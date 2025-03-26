@@ -9,7 +9,7 @@ from rich.syntax import Syntax
 from scribeagent.domain.notion.entities import TextBlock, CodeBlock
 from scribeagent.infrastructure.factory import create_notion_page_service
 from scribeagent.infrastructure.notion.api_client import NotionAPIClient
-
+from scribeagent.utils.notion_formatters import NotionBlockFormatter
 
 class VerboseNotionAPIClient(NotionAPIClient):
     """Extension of NotionAPIClient that captures API responses for verbose output."""
@@ -81,24 +81,7 @@ def notion_get_page(url, api_key=None, debug=False, max_depth=None, verbose=Fals
         # Print page content with rich formatting
         console.print("\n[bold green]Page Content:[/bold green]")
         for block in content:
-            if isinstance(block, CodeBlock):
-                block_type = f"[bold blue]{block.block_type.value}[/bold blue]"
-                language = f"[bold yellow]{block.language}[/bold yellow]"
-                console.print(f"- {block_type} ({language}):")
-                code = block.get_plain_text()
-                syntax = Syntax(code, block.language, theme="monokai", line_numbers=True)
-                console.print(syntax)
-                
-                if block.caption:
-                    caption_text = ''.join(caption.plain_text for caption in block.caption)
-                    if caption_text:
-                        console.print(f"[italic]{caption_text}[/italic]")
-            elif isinstance(block, TextBlock):
-                block_type = f"[bold blue]{block.block_type.value}[/bold blue]"
-                text = block.get_plain_text()
-                console.print(f"- {block_type}: {text}")
-            else:
-                console.print(f"- [bold yellow]{block.block_type.value}[/bold yellow]")
+            NotionBlockFormatter.format_as_rich(block, indent_level=0, console=console)
     else:
         # Standard output format
         print(f"Page Title: {page.get_title()}")
@@ -109,20 +92,7 @@ def notion_get_page(url, api_key=None, debug=False, max_depth=None, verbose=Fals
         # Print page content
         print("\nPage Content:")
         for block in content:
-            if isinstance(block, CodeBlock):
-                print(f"- {block.block_type.value} ({block.language}):")
-                print(f"```{block.language}")
-                print(block.get_plain_text())
-                print("```")
-                
-                if block.caption:
-                    caption_text = ''.join(caption.plain_text for caption in block.caption)
-                    if caption_text:
-                        print(f"Caption: {caption_text}")
-            elif isinstance(block, TextBlock):
-                print(f"- {block.block_type.value}: {block.get_plain_text()}")
-            else:
-                print(f"- {block.block_type.value}")
+            NotionBlockFormatter.format_as_text(block, indent_level=0)
 
 
 def main():

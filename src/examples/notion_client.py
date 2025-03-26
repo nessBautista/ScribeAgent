@@ -20,7 +20,7 @@ def example_usage():
     page_service = create_notion_page_service(api_key)
     
     # Get page by URL
-    page_url = "https://www.notion.so/Installing-Objectbox-with-an-xcode-project-19e10ad7d21e80eab058fa47a33eb1df?pvs=4"
+    page_url = "https://www.notion.so/aur-173-CrewAI-Learning-Session-11f10ad7d21e80ff9d51d29e5b78dcee?pvs=4"
     page, content = page_service.get_page_with_content(page_url)
     
     # Print page information
