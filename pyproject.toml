@@ -36,6 +36,7 @@ poethepoet = "^0.33.1"
 [tool.poe.tasks.test]
 shell = "pytest"
 
+
 [tool.poe.tasks.notion-example]
 cmd = "python -m src.examples.notion_client"
 help = "Run the Notion client example"
@@ -46,3 +47,5 @@ help = "Retrieve and display a Notion page by URL"
 
 [tool.poetry.scripts]
 notion-page = "scribeagent.cli:main"
+scribe-mcp-server = "scribeagent.mcp.server:main"
+
