@@ -5,9 +5,13 @@ description = "building a multi agent system for productivity tasks related to w
 readme = "README.md"
 requires-python = "^3.9"
 dependencies = [
-    "requests (>=2.32.3,<3.0.0)"
+    "requests (>=2.32.3,<3.0.0)",
+    "python-dotenv (>=1.0.1,<2.0.0)",
+    "rich (>=13.0.0,<14.0.0)"
 ]
 
+[project.scripts]
+notion-page = "scribeagent.cli:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -30,3 +34,14 @@ poethepoet = "^0.33.1"
 
 [tool.poe.tasks.test]
 shell = "pytest"
+
+[tool.poe.tasks.notion-example]
+cmd = "python -m src.examples.notion_client"
+help = "Run the Notion client example"
+
+[tool.poe.tasks.notion-page]
+cmd = "python -m scribeagent.cli"
+help = "Retrieve and display a Notion page by URL"
+
+[tool.poetry.scripts]
+notion-page = "scribeagent.cli:main"
