@@ -13,6 +13,7 @@ dependencies = [
 
 [project.scripts]
 notion-page = "scribeagent.cli:main"
+scribe-mcp-server = "scribeagent.mcp.server:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -21,7 +22,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "scribeagent"
 version = "0.1.0"
-
 
 packages = [
     { include = "scribeagent", from = "src" }  # If your code is in src/scribeagent/
@@ -36,7 +36,6 @@ poethepoet = "^0.33.1"
 [tool.poe.tasks.test]
 shell = "pytest"
 
-
 [tool.poe.tasks.notion-example]
 cmd = "python -m src.examples.notion_client"
 help = "Run the Notion client example"
@@ -44,8 +43,4 @@ help = "Run the Notion client example"
 [tool.poe.tasks.notion-page]
 cmd = "python -m scribeagent.cli"
 help = "Retrieve and display a Notion page by URL"
-
-[tool.poetry.scripts]
-notion-page = "scribeagent.cli:main"
-scribe-mcp-server = "scribeagent.mcp.server:main"
 

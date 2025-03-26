@@ -7,7 +7,7 @@ mcp = FastMCP("ScribeAgent")
 def hello_scribe(name: str) -> str:
     """Send a greeting to the user."""
     print("ScribeAgent received hello request")
-    return f"Hello {name}, welcome to ScribeAgent!"
+    return f"Hello {name}, welcome to ScribeAgent! what you want to write?"
 
 def main():
     mcp.run()
