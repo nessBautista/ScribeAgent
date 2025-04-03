@@ -120,13 +120,20 @@ def test_format_as_rich_code_block(mock_console):
     NotionBlockFormatter.format_as_rich(code_block, indent_level=0, console=console)
     
     # Verify console output
-    assert len(console.print.call_args_list) == 2
-    first_call = console.print.call_args_list[0]
-    second_call = console.print.call_args_list[1]
+    assert len(console.print.call_args_list) == 4
+    calls = console.print.call_args_list
     
-    assert first_call == call("- [bold blue]code[/bold blue] ([bold yellow]python[/bold yellow]):")
-    # Second call should contain a Syntax object, but we don't care about its specific memory address
-    assert "Syntax object at" in str(second_call)
+    # First call: prints the block header
+    assert str(calls[0]) == "call('- [bold blue]code[/bold blue] ([bold yellow]python[/bold yellow]):')"
+    
+    # Second call: empty line before code
+    assert str(calls[1]) == "call('')"
+    
+    # Third call: contains Syntax object
+    assert "Syntax object at" in str(calls[2])
+    
+    # Fourth call: empty line after code
+    assert str(calls[3]) == "call('')"
 
 
 @patch('rich.console.Console')

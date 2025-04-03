@@ -44,9 +44,18 @@ class NotionBlockFormatter:
         
         if isinstance(block, CodeBlock):
             print(f"{indent}- {block.block_type.value} ({block.language}):")
-            print(f"{indent}```{block.language}")
-            print(f"{indent}{block.get_plain_text()}")
-            print(f"{indent}```")
+            code_content = block.get_plain_text()
+            # Add code fence with language
+            print(f"\n{indent}```{block.language}")
+            # Split and indent each line of code
+            for line in code_content.split('\n'):
+                # Preserve empty lines but indent non-empty ones
+                if line.strip():
+                    print(f"{indent}{line}")
+                else:
+                    print("")
+            # Close code fence
+            print(f"{indent}```\n")
             
             if block.caption:
                 caption_text = ''.join(caption.plain_text for caption in block.caption)
@@ -75,8 +84,12 @@ class NotionBlockFormatter:
             language = f"[bold yellow]{block.language}[/bold yellow]"
             console.print(f"{indent}- {block_type} ({language}):")
             code = block.get_plain_text()
+            # Add extra newline before code block
+            console.print("")
             syntax = Syntax(code, block.language, theme="monokai", line_numbers=True)
-            console.print(f"{indent}  {syntax}")
+            console.print(syntax)
+            # Add extra newline after code block
+            console.print("")
             
             if block.caption:
                 caption_text = ''.join(caption.plain_text for caption in block.caption)
